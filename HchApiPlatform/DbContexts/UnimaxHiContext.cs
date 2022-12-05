@@ -19,6 +19,7 @@ namespace HchApiPlatform.DbContexts
 
         public virtual DbSet<Bed> Beds { get; set; } = null!;
         public virtual DbSet<Bedisolate> Bedisolates { get; set; } = null!;
+        public virtual DbSet<Bedstatus> Bedstatus { get; set; } = null!;
         public virtual DbSet<N> Ns { get; set; } = null!;
         public virtual DbSet<Ptipd> Ptipds { get; set; } = null!;
 
@@ -166,6 +167,89 @@ namespace HchApiPlatform.DbContexts
                     .HasMaxLength(1)
                     .IsUnicode(false)
                     .HasColumnName("SUSPEND_FLAG")
+                    .IsFixedLength();
+            });
+
+            modelBuilder.Entity<Bedstatus>(entity =>
+            {
+                entity.HasKey(e => e.BedNo);
+
+                entity.ToTable("BEDSTATUS", "IPD");
+
+                entity.Property(e => e.BedNo)
+                    .HasMaxLength(7)
+                    .IsUnicode(false)
+                    .HasColumnName("BED_NO")
+                    .IsFixedLength();
+
+                entity.Property(e => e.AdmitNo)
+                    .HasMaxLength(10)
+                    .IsUnicode(false)
+                    .HasColumnName("ADMIT_NO")
+                    .IsFixedLength();
+
+                entity.Property(e => e.AssignedChartNo)
+                    .HasMaxLength(10)
+                    .IsUnicode(false)
+                    .HasColumnName("ASSIGNED_CHART_NO")
+                    .IsFixedLength();
+
+                entity.Property(e => e.AssignedClerk)
+                    .HasMaxLength(8)
+                    .IsUnicode(false)
+                    .HasColumnName("ASSIGNED_CLERK")
+                    .IsFixedLength();
+
+                entity.Property(e => e.AssignedDate)
+                    .HasPrecision(7)
+                    .HasColumnName("ASSIGNED_DATE");
+
+                entity.Property(e => e.AssignedSex)
+                    .HasMaxLength(1)
+                    .IsUnicode(false)
+                    .HasColumnName("ASSIGNED_SEX")
+                    .IsFixedLength();
+
+                entity.Property(e => e.AssignedTime)
+                    .HasPrecision(6)
+                    .HasColumnName("ASSIGNED_TIME");
+
+                entity.Property(e => e.AssignedType)
+                    .HasMaxLength(1)
+                    .IsUnicode(false)
+                    .HasColumnName("ASSIGNED_TYPE")
+                    .IsFixedLength();
+
+                entity.Property(e => e.LastModifiedClerk)
+                    .HasMaxLength(8)
+                    .IsUnicode(false)
+                    .HasColumnName("LAST_MODIFIED_CLERK")
+                    .IsFixedLength();
+
+                entity.Property(e => e.LastModifiedDate)
+                    .HasPrecision(7)
+                    .HasColumnName("LAST_MODIFIED_DATE");
+
+                entity.Property(e => e.LastModifiedTime)
+                    .HasPrecision(6)
+                    .HasColumnName("LAST_MODIFIED_TIME");
+
+                entity.Property(e => e.Sex)
+                    .HasMaxLength(1)
+                    .IsUnicode(false)
+                    .HasColumnName("SEX")
+                    .IsFixedLength();
+
+                entity.Property(e => e.Status)
+                    .HasMaxLength(1)
+                    .IsUnicode(false)
+                    .HasColumnName("STATUS")
+                    .IsFixedLength();
+
+                entity.Property(e => e.TelStatus)
+                    .HasMaxLength(1)
+                    .IsUnicode(false)
+                    .HasColumnName("TEL_STATUS")
                     .IsFixedLength();
             });
 

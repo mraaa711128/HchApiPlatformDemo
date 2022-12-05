@@ -177,7 +177,7 @@ namespace HchApiPlatform.Biz
             return PtIpds.OrderBy(p => p.CheckinDatetime).ToList();
         }
 
-        private static string GetExclusiveWradFlagDesc(string flag)
+        public static string GetExclusiveWradFlagDesc(string flag)
         {
             switch (flag)
             {
