@@ -29,11 +29,11 @@ namespace HchApiPlatform.Biz
                                 .GroupBy(b => new
                                 {
                                     b.BedNo,
-                                    b.EffectiveDateC
+                                    //b.EffectiveDateC
                                 }).Select(r => new
                                 {
                                     r.Key.BedNo,
-                                    EffectiveDateC = r.Min(b => b.EffectiveDateC)!
+                                    EffectiveDateC = r.Min(b => b.EffectiveDateC)
                                 }).ToListAsync();
 
                 var taskNsList = hiContext2.Ns
@@ -83,7 +83,8 @@ namespace HchApiPlatform.Biz
                                              Status = status?.Status?.Trim() ?? "",
                                              StatusDesc = GetBedStatusDescription(status.Status?.Trim() ?? ""),
                                              AdmitNo = status.AdmitNo?.Trim() ?? "",
-                                             ChartNo = status.AssignedChartNo?.Trim() ?? ""
+                                             //ChartNo = status.AssignedChartNo?.Trim() ?? ""
+                                             ChartNo = GetActualAssignChartNo((status?.Status?.Trim() ?? ""), (status?.AssignedChartNo?.Trim() ?? ""))
                                          })
                                          .OrderBy(x => x.NsCode)
                                          .ThenBy(x => x.BedNo)
@@ -109,7 +110,8 @@ namespace HchApiPlatform.Biz
                         Status = admitBed.Status,
                         StatusDesc = admitBed.StatusDesc,
                         AdmitNo = admitBed.AdmitNo,
-                        ChartNo = admitBed.ChartNo.IsNullOrEmpty() ? "" : admitBed.ChartNo.Replace("@@", "").PadLeft(10, '0'),
+                        //ChartNo = admitBed.ChartNo.IsNullOrEmpty() ? "" : admitBed.ChartNo.Replace("@@", "").PadLeft(10, '0'),
+                        ChartNo = admitBed.ChartNo,
                         Name = string.Empty,
                         IdNo = string.Empty,
                         Gender = string.Empty,
@@ -208,6 +210,19 @@ namespace HchApiPlatform.Biz
                     return "清床中";
                 default:
                     return "";
+            }
+        }
+
+        public static string GetActualAssignChartNo(string bedStatus, string assignedChartNo)
+        {
+            if (assignedChartNo.IsNullOrEmpty()) { return string.Empty; }
+            switch (bedStatus.Trim())
+            {
+                case "O":
+                case "A":
+                    return assignedChartNo.Replace("@@", "").PadLeft(10, '0');
+                default:
+                    return string.Empty;
             }
         }
     }
