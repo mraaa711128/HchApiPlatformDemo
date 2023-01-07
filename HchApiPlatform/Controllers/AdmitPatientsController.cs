@@ -1,5 +1,6 @@
 ﻿using HchApiPlatform.Biz;
 using HchApiPlatform.Models;
+using HchApiPlatform.RequestModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,15 +21,34 @@ namespace HchApiPlatform.Controllers
     public class AdmitPatientsController : ControllerBase
     {
         private AdmitPatientBiz _admitPatientBiz;
-        public AdmitPatientsController(AdmitPatientBiz admitPatientBiz) : base()
+        private AdmitBedStatBiz _admitBedStatBiz;
+        public AdmitPatientsController(AdmitPatientBiz admitPatientBiz, AdmitBedStatBiz admitBedStatBiz) : base()
         {
             _admitPatientBiz = admitPatientBiz;
+            _admitBedStatBiz = admitBedStatBiz;
         }
 
         [HttpGet(Name = "Get Admint Patients")]
         public async Task<IEnumerable<AdmitPatient>> GetAsync()
         {
             return await _admitPatientBiz.GetAdmitPatientsAsync();
+        }
+
+        [HttpPut("Leave", Name = "Admit Patient Discharge")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IResult> AdmitPatientLeave([FromBody] AdmitPatientLeave leave)
+        {
+            if (leave == null) { 
+                return Results.Json(new { message = "找不到床號,住院號碼或病歷號" }, statusCode: StatusCodes.Status404NotFound); 
+            }
+            
+            var result = await _admitBedStatBiz.LeaveAdmitPatientAsync(leave);
+            if (result == false) {
+                return Results.Json(new { message = "找不到床號,住院號碼或病歷號" }, statusCode: StatusCodes.Status404NotFound); 
+            }
+            
+            return Results.Json(new { message = "成功" }, statusCode: StatusCodes.Status200OK);
         }
     }
 }

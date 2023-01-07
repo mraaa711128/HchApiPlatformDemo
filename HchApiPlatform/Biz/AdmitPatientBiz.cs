@@ -1,14 +1,22 @@
 ﻿using HchApiPlatform.DbContexts;
 using HchApiPlatform.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
-using System.Reflection.Metadata.Ecma335;
 using Utility.Extensions;
 
 namespace HchApiPlatform.Biz
 {
     public class AdmitPatientBiz
     {
+        public const string AdmitStatus_Apply = "0";
+        public const string AdmitStatus_Admitted = "1";
+        public const string AdmitStatus_Closed = "2";
+        public const string AdmitStatus_ReOpen = "3";
+        public const string AdmitStatus_Checkout = "4";
+        public const string AdmitStatus_CheckoutCanceled = "5";
+        public const string AdmitStatus_NonClosedDismiss = "6";
+        public const string AdmitStatus_AdmitCanceled = "7";
+        public const string AdmitStatus_NoAdmit = "N";
+
         private IDbContextFactory<UnimaxHoContext> _HoFactory;
         private IDbContextFactory<UnimaxHiContext> _HiFactory;
         
@@ -20,7 +28,6 @@ namespace HchApiPlatform.Biz
         public async Task<IEnumerable<AdmitPatient>> GetAdmitPatientsAsync()
         {
             IEnumerable<AdmitPatient> PtIpds;
-            IEnumerable<Bedisolate> Isolations;
             using (var _hiContext1 = _HiFactory.CreateDbContext())
             //using (var _hiContext2 = _HiFactory.CreateDbContext())
             {
@@ -60,9 +67,9 @@ namespace HchApiPlatform.Biz
                                     DivNo = ptipd.Ptipd.DivNo,
                                     PrivacyFlag = ptipd.Ptipd.PrivacyFlag,
                                     ExclusiveRoomFlag = ptipd.Ptipd.ExclusiveWardFlag,
-                                    ExclusiveRoomFlagDesc = GetExclusiveWradFlagDesc(ptipd.Ptipd.ExclusiveWardFlag.Trim()),
+                                    ExclusiveRoomFlagDesc = GetExclusiveWradFlagDesc(ptipd.Ptipd.ExclusiveWardFlag ?? null),
                                     IsolateType = ptipd.Ptipd.IsolateType,
-                                    IsolateTypeDesc = bedisolate.IsolateDescription ?? string.Empty
+                                    IsolateTypeDesc = bedisolate.IsolateDescription ?? null
                                 })
                                 .GroupJoin(_hiContext1.Beds, o => o.BedNo, i => i.BedNo, (pt, beds) => new { Pt = pt, Beds = beds })
                                 .SelectMany(r => r.Beds.DefaultIfEmpty(), (pt, bed) => new AdmitPatient
@@ -72,7 +79,7 @@ namespace HchApiPlatform.Biz
                                     CheckinDatetime = pt.Pt.CheckinDatetime,
                                     DoctorNo = pt.Pt.DoctorNo,
                                     BedNo = pt.Pt.BedNo,
-                                    NsCode = bed.NsCode ?? string.Empty,
+                                    NsCode = bed.NsCode ?? null,
                                     DivNo = pt.Pt.DivNo,
                                     PrivacyFlag= pt.Pt.PrivacyFlag,
                                     ExclusiveRoomFlag= pt.Pt.ExclusiveRoomFlag,
@@ -88,7 +95,7 @@ namespace HchApiPlatform.Biz
                                     DoctorNo = pt.Pt.DoctorNo,
                                     BedNo = pt.Pt.BedNo,
                                     NsCode = pt.Pt.NsCode,
-                                    NsName = n.NsName ?? string.Empty,
+                                    NsName = n.NsName ?? null,
                                     DivNo = pt.Pt.DivNo,
                                     PrivacyFlag = pt.Pt.PrivacyFlag,
                                     ExclusiveRoomFlag = pt.Pt.ExclusiveRoomFlag,
@@ -130,34 +137,34 @@ namespace HchApiPlatform.Biz
                 var pt = Patients.FirstOrDefault(pts => pts.ChartNo == p.ChartNo);
                 if (pt != null)
                 {
-                    p.IdNo = pt.IdNo.Trim();
-                    p.Name = pt.PtName.Trim();
-                    p.Gender = pt.Sex.Trim();
+                    p.IdNo = pt.IdNo ?? null;
+                    p.Name = pt.PtName ?? null;
+                    p.Gender = pt.Sex ?? null;
                     p.BirthDate = pt.BirthDate.FromBirthDateToAcDate();
                 }
-                p.BedNo = p.BedNo.Trim();
-                p.NsCode = p.NsCode.Trim();
-                p.NsName = p.NsName.Trim();
+                p.BedNo = p.BedNo ?? null;
+                p.NsCode = p.NsCode ?? null;
+                p.NsName = p.NsName ?? null;
 
                 var div = Divs.FirstOrDefault(divs => divs.DivNo == p.DivNo);
                 if (div != null)
                 {
-                    p.DivName = div.DivShortName.Trim();
+                    p.DivName = div.DivShortName ?? null;
                 } else
                 {
-                    p.DivName = "";
+                    p.DivName = null;
                 }
-                p.DivNo = p.DivNo.Trim();
+                p.DivNo = p.DivNo ?? null;
 
                 var doctor = Doctors.FirstOrDefault(doc => doc.DoctorNo == p.DoctorNo);
                 if (doctor != null)
                 {
-                    p.DoctorName = doctor.DoctorName.Trim();
+                    p.DoctorName = doctor.DoctorName ?? null;
                 } else
                 {
-                    p.DoctorName = "";
+                    p.DoctorName = null;
                 }
-                p.DoctorNo = p.DoctorNo.Trim();
+                p.DoctorNo = p.DoctorNo ?? null;
 
                 //var isolate = Isolations.FirstOrDefault(iso => iso.IsolateType == p.IsolateType);
                 //if (isolate != null)
@@ -167,8 +174,8 @@ namespace HchApiPlatform.Biz
                 //{
                 //    p.IsolateTypeDesc = "";
                 //}
-                p.IsolateType = p.IsolateType.Trim();
-                p.IsolateTypeDesc = p.IsolateTypeDesc ?? string.Empty;
+                p.IsolateType = p.IsolateType ?? null;
+                p.IsolateTypeDesc = p.IsolateTypeDesc ?? null;
                 //p.IsolateType = p.IsolateType.Trim();
 
 
@@ -177,8 +184,79 @@ namespace HchApiPlatform.Biz
             return PtIpds.OrderBy(p => p.CheckinDatetime).ToList();
         }
 
-        public static string GetExclusiveWradFlagDesc(string flag)
+        public async Task<AdmitPatient?> GetAdmitPatientAsync(string? admitNo)
         {
+            AdmitPatient? admitPatient = null;
+            Ptipd? ptipd;
+
+            if (admitNo.IsNullOrEmpty()) { return null; }
+
+            using (var hiCtx = _HiFactory.CreateDbContext())
+            using (var hoCtx = _HoFactory.CreateDbContext())
+            {
+                ptipd = await hiCtx.Ptipds
+                                   .AsNoTracking()
+                                   .FirstOrDefaultAsync(p => p.AdmitNo.Trim() == admitNo);
+                if (ptipd != null)
+                {
+                    admitPatient = new AdmitPatient { AdmitNo = admitNo };
+                    admitPatient.ChartNo = ptipd.ChartNo?.Trim();
+                    admitPatient.AdmitStatus = ptipd.Status;
+                    admitPatient.AdmitStatusDesc = AdmitPatientBiz.GetAdmitStatusDesc(admitPatient.AdmitStatus);
+                    admitPatient.CheckinDatetime = new string[] { (ptipd.AdmitDate?.ToString() ?? "").PadLeft(7, '0'), (ptipd.AdmitTime?.ToString() ?? "").PadLeft(6, '0') }.ToAcDateTime();
+                    admitPatient.DoctorNo = ptipd.VsNo?.Trim();
+                    admitPatient.DivNo = ptipd.DivNo?.Trim();
+                    admitPatient.BedNo = ptipd.BedNo?.Trim();
+                    admitPatient.PrivacyFlag = ptipd.PrivacyFlag?.Trim();
+                    admitPatient.ExclusiveRoomFlag = ptipd.ExclusiveWardFlag?.Trim();
+                    admitPatient.ExclusiveRoomFlagDesc = AdmitPatientBiz.GetExclusiveWradFlagDesc(admitPatient.ExclusiveRoomFlag);
+                    admitPatient.IsolateType = ptipd.IsolateType?.Trim();
+
+                    var patient = await hoCtx.Charts
+                                             .AsNoTracking()
+                                             .FirstOrDefaultAsync(p => p.ChartNo.Trim() == admitPatient.ChartNo);
+                    if (patient != null)
+                    {
+                        admitPatient.Name = patient.PtName?.Trim();
+                        admitPatient.IdNo = patient.IdNo?.Trim();
+                        admitPatient.BirthDate = patient.BirthDate.FromBirthDateToAcDate();
+                        admitPatient.Gender = patient.Sex?.Trim();
+                    }
+
+                    var doctor = await hoCtx.Doctors
+                                            .AsNoTracking()
+                                            .FirstOrDefaultAsync(d => d.DoctorNo.Trim() == admitPatient.DoctorNo);
+                    admitPatient.DoctorName = doctor?.DoctorName?.Trim();
+
+                    var bed = await hiCtx.Beds
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(b => b.BedNo.Trim() == admitPatient.BedNo);
+                    if (bed?.NsCode != null)
+                    {
+                        var ns = await hiCtx.Ns
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(n => n.NsCode.Trim() == bed.NsCode.Trim());
+                        admitPatient.NsCode = ns?.NsCode?.Trim();
+                        admitPatient.NsName = ns?.NsName?.Trim();
+                    }
+
+                    var div = await hoCtx.Divs
+                                         .AsNoTracking()
+                                         .FirstOrDefaultAsync(d => d.DivNo.Trim() == admitPatient.DivNo);
+                    admitPatient.DivName = div?.DivShortName?.Trim();
+
+                    var isolate = await hiCtx.Bedisolates
+                                             .AsNoTracking()
+                                             .FirstOrDefaultAsync(i => i.IsolateType.Trim() == admitPatient.IsolateType);
+                    admitPatient.IsolateTypeDesc = isolate?.IsolateDescription?.Trim();
+                }
+            }
+
+            return admitPatient;
+        }
+        public static string? GetExclusiveWradFlagDesc(string? flag)
+        {
+            if (flag == null) { return null; }
             switch (flag)
             {
                 case "0":
@@ -188,7 +266,35 @@ namespace HchApiPlatform.Biz
                 case "2":
                     return "隔離";
                 default:
-                    return "";
+                    return null;
+            }
+        }
+
+        public static string? GetAdmitStatusDesc(string? admitStatus)
+        {
+            if (admitStatus == null) { return null; }
+            switch (admitStatus)
+            {
+                case "0":
+                    return "申報";
+                case "1":
+                    return "住院";
+                case "2":
+                    return "關帳";
+                case "3":
+                    return "重開帳";
+                case "4":
+                    return "結帳";
+                case "5":
+                    return "結帳取消";
+                case "6":
+                    return "退床未關帳";
+                case "7":
+                    return "取消住院";
+                case "N":
+                    return "假住院";
+                default:
+                    return null;
             }
         }
     }

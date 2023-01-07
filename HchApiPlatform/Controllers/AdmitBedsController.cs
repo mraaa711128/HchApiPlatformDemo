@@ -11,9 +11,9 @@ namespace HchApiPlatform.Controllers
     [Route("v1/[controller]")]
     public class AdmitBedsController : ControllerBase
     {
-        private AdmitBedBiz _admitBedBiz;
-        public AdmitBedsController(AdmitBedBiz admitBedBiz) : base() {
-            _admitBedBiz = admitBedBiz;
+        private AdmitBedStatBiz _admitBedStatBiz;
+        public AdmitBedsController(AdmitBedStatBiz admitBedStatBiz) : base() {
+            _admitBedStatBiz = admitBedStatBiz;
         }
 
         /// <summary>
@@ -30,12 +30,12 @@ namespace HchApiPlatform.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IEnumerable<AdmitBed>> GetAsync([FromQuery] string ns = "")
         {
-            string[] nsCodes = null;
+            string[] nsCodes = Array.Empty<string>();
             if (!ns.IsNullOrEmpty())
             {
                 nsCodes = ns.Split(',');
             }
-            return await _admitBedBiz.GetAdmitBedsAsync(nsCodes);
+            return await _admitBedStatBiz.GetAdmitBedsAsync(nsCodes);
         }
 
         /// <summary>
@@ -52,13 +52,12 @@ namespace HchApiPlatform.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IEnumerable<AdmitBedDetail>> GetDetailAsync([FromQuery] string ns = "")
         {
-            string[] nsCodes = null;
+            string[] nsCodes = Array.Empty<string>();
             if (!ns.IsNullOrEmpty())
             {
                 nsCodes = ns.Split(',');
             }
-            var admitBeds = await _admitBedBiz.GetAdmitBedsAsync(nsCodes);
-            return await _admitBedBiz.GetAdmitBedsWithDetailAsync(admitBeds.ToList());
+            return await _admitBedStatBiz.GetAdmitBedsWithDetailAsync(nsCodes);
         }
         //[HttpGet(Name = "Get Admit Beds with Detail Data")]
         //public async Task<IEnumerable<AdmitBedDetail>> GetDetailAsync([FromQuery] bool detail)

@@ -20,6 +20,11 @@ builder.Services.AddDatabase(builder.Configuration);
 
 builder.Services.AddScoped<AdmitPatientBiz>();
 builder.Services.AddScoped<AdmitBedBiz>();
+builder.Services.AddScoped<AdmitBedStatBiz>();
+
+builder.Services.AddQuartzJobs(builder.Configuration);
+
+builder.Services.AddNLog(builder.Configuration);
 
 var app = builder.Build();
 

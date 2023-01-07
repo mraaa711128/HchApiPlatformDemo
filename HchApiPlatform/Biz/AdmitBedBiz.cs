@@ -8,6 +8,12 @@ namespace HchApiPlatform.Biz
 {
     public class AdmitBedBiz
     {
+        public const string BedStatus_Empty = "E";
+        public const string BedStatus_Occupied = "O";
+        public const string BedStatus_Isolated = "I";
+        public const string BedStatus_Reserved = "A";
+        public const string BedStatus_Cleaning = "C";
+
         IDbContextFactory<UnimaxHoContext> _hoFactory;
         IDbContextFactory<UnimaxHiContext> _hiFactory;
 
@@ -70,21 +76,21 @@ namespace HchApiPlatform.Biz
                                          {
                                              BedNo = bed.Bed.BedNo,
                                              NsCode = bed.Bed.NsCode,
-                                             NsName = n.NsName ?? "",
+                                             NsName = n?.NsName?.Trim(),
                                              WardNo = bed.Bed.WardNo
                                          })
                                          .GroupJoin(bedStatus, o => o.BedNo, i => i.BedNo, (bed, statuses) => new { Bed = bed, Statuses = statuses })
                                          .SelectMany(bed => bed.Statuses.DefaultIfEmpty(), (bed, status) => new AdmitBed
                                          {
                                              BedNo = bed.Bed.BedNo.Trim(),
-                                             NsCode = bed.Bed.NsCode?.Trim() ?? "",
-                                             NsName = bed.Bed.NsName.Trim(),
-                                             WardNo = bed.Bed.WardNo?.Trim() ?? "",
-                                             Status = status?.Status?.Trim() ?? "",
-                                             StatusDesc = GetBedStatusDescription(status.Status?.Trim() ?? ""),
-                                             AdmitNo = status.AdmitNo?.Trim() ?? "",
+                                             NsCode = bed.Bed.NsCode?.Trim(),
+                                             NsName = bed.Bed.NsName?.Trim(),
+                                             WardNo = bed.Bed.WardNo?.Trim(),
+                                             Status = status?.Status?.Trim(),
+                                             StatusDesc = GetBedStatusDescription(status?.Status?.Trim() ?? ""),
+                                             AdmitNo = status?.AdmitNo?.Trim(),
                                              //ChartNo = status.AssignedChartNo?.Trim() ?? ""
-                                             ChartNo = GetActualAssignChartNo((status?.Status?.Trim() ?? ""), (status?.AssignedChartNo?.Trim() ?? ""))
+                                             ChartNo = GetActualAssignChartNo(status?.Status?.Trim(), status?.AssignedChartNo?.Trim())
                                          })
                                          .OrderBy(x => x.NsCode)
                                          .ThenBy(x => x.BedNo)
@@ -99,7 +105,7 @@ namespace HchApiPlatform.Biz
         {
             List<AdmitBedDetail> result = new List<AdmitBedDetail>();
 
-            await Task.Run(() => {
+            await Task.Factory.StartNew(() => {
                 admitBeds.AsParallel().ForAll(admitBed => {
                     var detail = new AdmitBedDetail
                     {
@@ -194,9 +200,92 @@ namespace HchApiPlatform.Biz
             
             return result;
         }
-        public static string GetBedStatusDescription(string bedStatus)
+        
+        public async Task<AdmitBedDetail> GetAdmitBedWithDetailAsync(AdmitBed admitBed)
         {
-            switch (bedStatus.Trim())
+            var detail = new AdmitBedDetail
+            {
+                BedNo = admitBed.BedNo,
+                NsCode = admitBed.NsCode,
+                NsName = admitBed.NsName,
+                WardNo = admitBed.WardNo,
+                Status = admitBed.Status,
+                StatusDesc = admitBed.StatusDesc,
+                AdmitNo = admitBed.AdmitNo,
+                ChartNo = admitBed.ChartNo,
+                Name = null,
+                IdNo = null,
+                Gender = null,
+                DivNo = null,
+                DivName = null,
+                DoctorNo = null,
+                DoctorName = null,
+                PrivacyFlag = null,
+                ExclusiveRoomFlag = null,
+                ExclusiveRoomFlagDesc = null,
+                IsolateType = null,
+                IsolateTypeDesc = null
+            };
+            if (!detail.AdmitNo.IsNullOrEmpty())
+            {
+                Ptipd? ptipd;
+                using (var hiCtx = _hiFactory.CreateDbContext())
+                using (var hoCtx = _hoFactory.CreateDbContext())
+                {
+                    ptipd = await hiCtx.Ptipds
+                                       .AsNoTracking()
+                                       .FirstOrDefaultAsync(p => p.AdmitNo.Trim() == detail.AdmitNo);
+                    if (ptipd != null)
+                    {
+                        detail.ChartNo = ptipd.ChartNo?.Trim();
+                        detail.AdmitStatus = ptipd.Status;
+                        detail.AdmitStatusDesc = AdmitPatientBiz.GetAdmitStatusDesc(detail.AdmitStatus);
+                        detail.CheckinDatetime = new string[] { (ptipd.AdmitDate?.ToString() ?? "").PadLeft(7, '0'), (ptipd.AdmitTime?.ToString() ?? "").PadLeft(6, '0') }.ToAcDateTime();
+                        detail.DoctorNo = ptipd.VsNo?.Trim();
+                        detail.DivNo = ptipd.DivNo?.Trim();
+                        detail.PrivacyFlag = ptipd.PrivacyFlag?.Trim();
+                        detail.ExclusiveRoomFlag = ptipd.ExclusiveWardFlag?.Trim();
+                        detail.ExclusiveRoomFlagDesc = AdmitPatientBiz.GetExclusiveWradFlagDesc(detail.ExclusiveRoomFlag);
+                        detail.IsolateType = ptipd.IsolateType?.Trim();
+
+                        if (detail.Status == "A" || detail.Status == "O")
+                        {
+
+                            var patient = await hoCtx.Charts
+                                                     .AsNoTracking()
+                                                     .FirstOrDefaultAsync(p => p.ChartNo.Trim() == detail.ChartNo);
+                            if (patient != null)
+                            {
+                                detail.Name = patient.PtName?.Trim();
+                                detail.IdNo = patient.IdNo?.Trim();
+                                detail.BirthDate = patient.BirthDate.FromBirthDateToAcDate();
+                                detail.Gender = patient.Sex?.Trim();
+                            }
+
+                            var doctor = await hoCtx.Doctors
+                                                    .AsNoTracking()
+                                                    .FirstOrDefaultAsync(d => d.DoctorNo.Trim() == detail.DoctorNo);
+                            detail.DoctorName = doctor?.DoctorName?.Trim();
+
+                            var div = await hoCtx.Divs
+                                                 .AsNoTracking()
+                                                 .FirstOrDefaultAsync(d => d.DivNo.Trim() == detail.DivNo);
+                            detail.DivName = div?.DivShortName?.Trim();
+
+                            var isolate = await hiCtx.Bedisolates
+                                                     .AsNoTracking()
+                                                     .FirstOrDefaultAsync(i => i.IsolateType.Trim() == detail.IsolateType);
+                            detail.IsolateTypeDesc = isolate?.IsolateDescription?.Trim();
+                        }
+                    }
+                }
+            }
+            return detail;
+        }
+
+        public static string? GetBedStatusDescription(string? bedStatus)
+        {
+            switch (bedStatus?.Trim())
             {
                 case "E":
                     return "空床";
@@ -209,21 +298,22 @@ namespace HchApiPlatform.Biz
                 case "C":
                     return "清床中";
                 default:
-                    return "";
+                    return null;
             }
         }
 
-        public static string GetActualAssignChartNo(string bedStatus, string assignedChartNo)
+        public static string? GetActualAssignChartNo(string? bedStatus, string? assignedChartNo)
         {
-            if (assignedChartNo.IsNullOrEmpty()) { return string.Empty; }
-            switch (bedStatus.Trim())
+            if (assignedChartNo.IsNullOrEmpty()) { return null; }
+            switch (bedStatus?.Trim())
             {
                 case "O":
                 case "A":
-                    return assignedChartNo.Replace("@@", "").PadLeft(10, '0');
+                    return assignedChartNo?.Replace("@@", "").PadLeft(10, '0');
                 default:
-                    return string.Empty;
+                    return null;
             }
         }
     }
+
 }

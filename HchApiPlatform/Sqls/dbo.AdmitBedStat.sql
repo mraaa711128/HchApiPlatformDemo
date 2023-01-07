@@ -1,0 +1,28 @@
+﻿CREATE TABLE [dbo].[AdmitBedStat] (
+    [BedNo]                 CHAR (7)  NOT NULL,
+    [NsCode]                CHAR (5)  NULL,
+    [NsName]                NVARCHAR (20) NULL,
+    [WardNo]                CHAR (5)  NULL,
+    [Status]                CHAR (1)  NULL,
+    [StatusDesc]            NVARCHAR (20) NULL,
+    [AdmitNo]               CHAR (10) NULL,
+    [ChartNo]               CHAR (10) NULL,
+	[AdmitStatus]			CHAR (1) NULL,
+	[AdmitStatusDesc]		NVARCHAR (20) NULL,
+    [Name]                  NVARCHAR (20) NULL,
+    [IdNo]                  CHAR (10) NULL,
+    [BirthDate]             DATETIME  NULL,
+    [Gender]                CHAR (1)  NULL,
+    [CheckinDateTime]       DATETIME  NULL,
+    [DoctorNo]              CHAR (8)  NULL,
+    [DoctorName]            NVARCHAR (10) NULL,
+    [DivNo]                 CHAR (4)  NULL,
+    [DivName]               NVARCHAR (12) NULL,
+    [PrivacyFlag]           CHAR (1)  NULL,
+    [ExclusiveRoomFlag]     CHAR (1)  NULL,
+    [ExclusiveRoomFlagDesc] NVARCHAR (12) NULL,
+    [IsolateType]           CHAR (2)  NULL,
+    [IsolateTypeDesc]       NVARCHAR (20) NULL,
+    PRIMARY KEY CLUSTERED ([BedNo] ASC)
+);
+
