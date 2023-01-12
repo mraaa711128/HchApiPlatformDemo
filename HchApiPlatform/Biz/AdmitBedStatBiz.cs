@@ -24,6 +24,7 @@ namespace HchApiPlatform.Biz
         public async Task<IEnumerable<AdmitBed>> GetAdmitBedsAsync(string[] nsCodes)
         {
             var result = new List<AdmitBed>();
+            var lockObj = new Object();
             await Task.Factory.StartNew(() => {
                 using (var platformCtx = _PlatformFactory.CreateDbContext())
                 {
@@ -47,16 +48,20 @@ namespace HchApiPlatform.Biz
                             AdmitNo = bedStat.AdmitNo?.Trim(),
                             ChartNo = bedStat.ChartNo?.Trim()
                         };
-                        result.Add(bed);
+                        lock(lockObj)
+                        {
+                            result.Add(bed);
+                        }
                     });
                 }
             });
-            return result;
+            return result.OrderBy(r => r.NsCode).ThenBy(r => r.BedNo).ToList();
         }
 
         public async Task<IEnumerable<AdmitBedDetail>> GetAdmitBedsWithDetailAsync(string[] nsCodes)
         {
             var result = new List<AdmitBedDetail>();
+            var lockObj = new Object();
             await Task.Factory.StartNew(() => { 
                 using (var platformCtx = _PlatformFactory.CreateDbContext())
                 {
@@ -95,11 +100,13 @@ namespace HchApiPlatform.Biz
                             IsolateType = bedStat.IsolateType,
                             IsolateTypeDesc = bedStat.IsolateTypeDesc
                         };
-                        result.Add(bedDetail);
+                        lock (lockObj) {
+                            result.Add(bedDetail);
+                        }
                     });
                 }
             });
-            return result;
+            return result.OrderBy(r => r.NsCode).ThenBy(r => r.BedNo).ToList();
         }
 
         public async Task<bool> LeaveAdmitPatientAsync(AdmitPatientLeave admitPatient)
