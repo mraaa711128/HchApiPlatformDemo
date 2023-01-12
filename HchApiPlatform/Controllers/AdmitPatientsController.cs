@@ -37,18 +37,19 @@ namespace HchApiPlatform.Controllers
         [HttpPut("Leave", Name = "Admit Patient Discharge")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IResult> AdmitPatientLeave([FromBody] AdmitPatientLeave leave)
+        public async Task<ObjectResult> AdmitPatientLeave([FromBody] AdmitPatientLeave leave)
         {
             if (leave == null) { 
-                return Results.Json(new { message = "找不到床號,住院號碼或病歷號" }, statusCode: StatusCodes.Status404NotFound); 
+                return NotFound(new { message = "找不到床號,住院號碼或病歷號" }); 
             }
             
             var result = await _admitBedStatBiz.LeaveAdmitPatientAsync(leave);
             if (result == false) {
-                return Results.Json(new { message = "找不到床號,住院號碼或病歷號" }, statusCode: StatusCodes.Status404NotFound); 
+                return NotFound(new { message = "找不到床號,住院號碼或病歷號" }); 
             }
-            
-            return Results.Json(new { message = "成功" }, statusCode: StatusCodes.Status200OK);
+
+            //return Results.Json(new { message = "成功" }, statusCode: StatusCodes.Status200OK);
+            return Ok(new { message = "成功" });
         }
     }
 }
