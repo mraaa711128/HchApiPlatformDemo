@@ -115,18 +115,39 @@ namespace HchApiPlatform.Biz
                     {
                         if (bed.AdmitNo == admitPatient.AdmitNo && bed.ChartNo == admitPatient.ChartNo)
                         {
-                            var newBed = new AdmitBedStat
-                            {
-                                BedNo = bed.BedNo,
-                                NsCode = bed.NsCode,
-                                NsName = bed.NsName,
-                                WardNo = bed.WardNo,
-                                Status = AdmitBedBiz.BedStatus_Empty,
-                                StatusDesc = AdmitBedBiz.GetBedStatusDescription(AdmitBedBiz.BedStatus_Empty)
-                            };
-                            platformCtx.AdmitBedStats.Remove(bed);
-                            await platformCtx.SaveChangesAsync(); 
-                            platformCtx.AdmitBedStats.Add(newBed);
+                            //var newBed = new AdmitBedStat
+                            //{
+                            //    BedNo = bed.BedNo,
+                            //    NsCode = bed.NsCode,
+                            //    NsName = bed.NsName,
+                            //    WardNo = bed.WardNo,
+                            //    Status = AdmitBedBiz.BedStatus_Empty,
+                            //    StatusDesc = AdmitBedBiz.GetBedStatusDescription(AdmitBedBiz.BedStatus_Empty)
+                            //};
+                            //platformCtx.AdmitBedStats.Remove(bed);
+                            //await platformCtx.SaveChangesAsync(); 
+                            //platformCtx.AdmitBedStats.Add(newBed);
+                            bed.Status = AdmitBedBiz.BedStatus_Empty;
+                            bed.StatusDesc = AdmitBedBiz.GetBedStatusDescription(AdmitBedBiz.BedStatus_Empty);
+                            bed.AdmitNo = null;
+                            bed.ChartNo = null;
+                            bed.AdmitStatus = null;
+                            bed.AdmitStatusDesc = null;
+                            bed.Name = null;
+                            bed.IdNo = null;
+                            bed.BirthDate = null;
+                            bed.Gender = null;
+                            bed.CheckinDateTime = null;
+                            bed.DoctorNo = null;
+                            bed.DoctorName = null;
+                            bed.DivNo = null;
+                            bed.DivName = null;
+                            bed.PrivacyFlag = null;
+                            bed.ExclusiveRoomFlag = null;
+                            bed.ExclusiveRoomFlagDesc = null;
+                            bed.IsolateType = null;
+                            bed.IsolateTypeDesc = null;
+                            platformCtx.Update(bed);
                             await platformCtx.SaveChangesAsync();
                         }
                     }
